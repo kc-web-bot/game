@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect the Hearts Game</title>
+    <style>
+        body {
+            background-color: #FFFFE0; /* Light pale yellow */
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .avatar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: url('https://www.clipartkey.com/mpngs/m/29-297849_cute-avatar-png-transparent-png.png') no-repeat center center; /* Cute Avatar */
+            background-size: cover;
+            transform: translateX(-50%);
+        }
+        .heart {
+            width: 30px;
+            height: 30px;
+            position: absolute;
+            background: #FFC0CB; /* Pale pink */
+            transform: rotate(-45deg);
+            animation: fall 4s ease-in infinite;
+        }
+        .heart::before, .heart::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #FFC0CB; /* Pale pink */
+            position: absolute;
+        }
+        .heart::before {
+            top: -15px;
+            left: 0;
+        }
+        .heart::after {
+            left: 15px;
+            top: 0;
+        }
+        @keyframes fall {
+            0% {
+                transform: rotate(-45deg) translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(-45deg) translate(0, 100vh);
+                opacity: 0;
+            }
+        }
+        .message {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            padding: 20px;
+            border: 2px solid #FFC0CB; /* Pale pink */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+            max-width: 80%;
+            color: red;
+            font-family: 'Dancing Script', cursive; /* Romantic Font */
+            font-size: 20px;
+            text-align: center;
+        }
+        .quest-popup {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border: 2px solid #FFC0CB; /* Pale pink */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .quest-popup button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #FFC0CB; /* Pale pink */
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        .quest-popup button:hover {
+            background: #FF69B4; /* Hot pink */
+        }
+        .instructions {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #fff;
+            padding: 20px;
+            border: 2px solid #FFC0CB; /* Pale pink */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10;
+            max-width: 80%;
+            text-align: center;
+        }
+        .instructions p {
+            margin: 0;
+            font-size: 16px;
+        }
+        .instructions button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #FFC0CB; /* Pale pink */
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        .instructions button:hover {
+            background: #FF69B4; /* Hot pink */
+        }
+        .heart-animation {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            z-index: 20;
+        }
+        .heart-animation .heart {
+            width: 100px;
+            height: 100px;
+            animation: heartBloom 1.5s ease-out;
+        }
+        @keyframes heartBloom {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet"> <!-- Romantic Font -->
+</head>
+<body>
+    <div class="avatar" id="avatar"></div>
+    <div class="message" id="message">
+        <p>❤️💌 "So it's not gonna be easy. It's going to be really hard; we're gonna have to work at this every day, but I want to do that because I want you. I want all of you, forever, every day. You and me ... every day. - The Notebook 💌❤️"</p>
+    </div>
+    <div class="quest-popup" id="questPopup">
+        <p>Accept quest from Kesang? 🤔</p>
+        <button id="acceptQuest">Yes 💖</button>
+        <button id="declineQuest">No 💔</button>
+    </div>
+    <div class="instructions" id="instructions">
+        <p>Collect 10 hearts by clicking them and accept love! 💌✨</p>
+        <p>Click the hearts as they fall from the sky to collect them! 🌟❤️</p>
+        <button id="finishedReading">Finished Reading 📜</button>
+    </div>
+    <div class="heart-animation" id="heartAnimation">
+        ❤️
+    </div>
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundjay.com/button/sounds/button-16.mp3" type="audio/mpeg"> <!-- Cute Happy Music -->
+        Your browser does not support the audio element.
+    </audio>
+    <script>
+        let heartCount = 0;
+        const heartLimit = 10; // 10 hearts
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.style.left = `${Math.random() * 100}vw`;
+            heart.style.animationDuration = `${Math.random() * 2 + 3}s`;
+            document.body.appendChild(heart);
+
+            setTimeout(() => {
+                heart.remove();
+            }, 4000);
+
+            heart.addEventListener('click', () => {
+                heart.remove();
+                heartCount++;
+                if (heartCount >= heartLimit) {
+                    document.getElementById('message').style.display = 'block';
+                    document.getElementById('heartAnimation').style.display = 'block'; // Show heart animation
+                    setTimeout(() => {
+                        document.getElementById('heartAnimation').style.display = 'none'; // Hide heart animation after showing
+                    }, 1500);
+                }
+            });
+        }
+
+        setInterval(createHeart, 300);
+
+        // Move avatar with touch/mouse events
+        document.addEventListener('mousemove', (event) => {
+            const avatar = document.getElementById('avatar');
+            avatar.style.left = `${event.clientX - 30}px`; // 30 is half of avatar's width
+        });
+
+        document.addEventListener('touchmove', (event) => {
+            const avatar = document.getElementById('avatar');
+            avatar.style.left = `${event.touches[0].clientX - 30}px`; // 30 is half of avatar's width
+        });
+
+        // Show the quest popup
+        document.getElementById('questPopup').style.display = 'block';
+
+        // Handle quest acceptance
+        document.getElementById('acceptQuest').addEventListener('click', () => {
+            document.getElementById('questPopup').style.display = 'none';
+            document.getElementById('instructions').style.display = 'block'; // Show instructions
+            document.getElementById('bgMusic').play(); // Play background music
+        });
+
+        // Handle quest decline
+        document.getElementById('declineQuest').addEventListener('click', () => {
+            document.getElementById('questPopup').innerHTML = '<p>Maybe next time! 😊</p>';
+            setTimeout(() => {
+                document.getElementById('questPopup').style.display = 'none';
+            }, 2000);
+        });
+
+        // Handle finished reading button
+        document
